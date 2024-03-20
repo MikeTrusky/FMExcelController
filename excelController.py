@@ -6,7 +6,17 @@ positionColumn = 1 #const
 teamColumn = 2 #const
 playerColumn = 3 #const
 fileName = "Barrow.xlsx" #read from config/arguments/something
-search_value = "J. Mullings" #read from config/arguments/something
+allColumnsCount = 27
+
+#TODO column by index, or finding index by column name? 
+
+positionMainValueColumn = 10
+positionSecondaryValueColumn = 12
+positionProgressColumn = 14
+CAValueColumn = 21
+CAProgressColumn = 22
+
+#TODO use only one: xlwings or openpyxl?
 
 class Helper:
     def find_row_by_value(self, sheet, column, min_row_value, value):
@@ -18,7 +28,10 @@ class Helper:
 class OpenpyxlController:
     def create_sheet(self):
         self.wb = openpyxl.load_workbook(fileName)
-        return self.wb.active    
+        return self.wb.active
+
+    def close_controller(self):
+        self.wb.close()    
 
 class XlwingsController:
     def create_sheet(self, useApp):
@@ -70,10 +83,11 @@ class ExcelModificationsController:
         positionRow = self.helper.find_row_by_value(sheet, positionColumn, 1, positionValue)
         if positionRow is not None:        
             team_part_row = self.helper.find_row_by_value(sheet, teamColumn, positionRow, teamValue)
+            self.openpyxlController.close_controller()
             if team_part_row is not None:
                 return team_part_row + positionRow
             else:
-                return None            
+                return None                    
         
     def insert_row(self, positionValue, teamValue):        
         sheet = self.xlwingsController.create_sheet(True)    
@@ -87,19 +101,41 @@ class ExcelModificationsController:
         sheet.range((row_number, 1), (row_number, len(values))).value = values
         self.xlwingsController.close_controller(True)
 
-    def check_if_player_exist(self, value):        
-        sheet = self.openpyxlController.create_sheet()        
-        return self.helper.find_row_by_value(sheet, playerColumn, 1, value)
+    def get_player_row(self, value):        
+        sheet = self.openpyxlController.create_sheet()                
+        playerRow = self.helper.find_row_by_value(sheet, playerColumn, 1, value)
+        self.openpyxlController.close_controller()
+        return playerRow
+    
+    def get_player_data(self, value):
+        sheet = self.xlwingsController.create_sheet(True)
+        rowNumber = self.get_player_row(value) + 1              
+        data = sheet.range((rowNumber, 1), (rowNumber, allColumnsCount)).value
+        self.xlwingsController.close_controller(True)
+        return data
     
     def insert_player_by_file(self):
         readFileData = self.csvController.read_csv("playerInfo.csv")
         searchValue = readFileData[1][2]
-        playerIndex = self.check_if_player_exist(searchValue)
-        if playerIndex is not None:
-            self.update_row_values(playerIndex + 1, readFileData[1])
+        playerRow = self.get_player_row(searchValue)
+        if playerRow is not None:
+            #check difference between position_values previous & current + difference between CA previous & current
+            playerdata = self.get_player_data(searchValue)
+            previousPositionMainValue = float(playerdata[positionMainValueColumn])
+            previousPositionSecondaryValue = float(playerdata[positionSecondaryValueColumn])
+            previousCAValue = float(playerdata[CAValueColumn])
+            
+            currentPositionMainValue = float(readFileData[1][positionMainValueColumn])
+            currentPositionSecondaryValue = float(readFileData[1][positionSecondaryValueColumn])
+            currentCAValue = float(readFileData[1][CAValueColumn])
+
+            readFileData[1][positionProgressColumn] = max(currentPositionMainValue - previousPositionMainValue, currentPositionSecondaryValue - previousPositionSecondaryValue)
+            readFileData[1][CAProgressColumn] = currentCAValue - previousCAValue
+
+            self.update_row_values(playerRow + 1, readFileData[1])
         else:
             newRow = self.insert_row(readFileData[1][0], readFileData[1][1])
-            self.update_row_values(newRow + 1, readFileData[1])
+            self.update_row_values(newRow + 1, readFileData[1])        
 
 excelModificationsController = ExcelModificationsController()
 #excelModificationsController.insert_row("BR", "REZERWA")           
