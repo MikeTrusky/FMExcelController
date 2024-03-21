@@ -101,6 +101,12 @@ class ExcelModificationsController:
         sheet.range((row_number, 1), (row_number, len(values))).value = values
         self.xlwingsController.close_controller(True)
 
+    def update_columns_values(self, rowNumber, columnsNumbers, values):
+        sheet = self.xlwingsController.create_sheet(True)                
+        for i in range(len(columnsNumbers)):            
+            sheet.range((rowNumber, columnsNumbers[i]), (rowNumber, columnsNumbers[i])).value = values[i]            
+        self.xlwingsController.close_controller(True)
+
     def get_player_row(self, value):        
         sheet = self.openpyxlController.create_sheet()                
         playerRow = self.helper.find_row_by_value(sheet, playerColumn, 1, value)
@@ -120,23 +126,36 @@ class ExcelModificationsController:
         playerRow = self.get_player_row(searchValue)
         if playerRow is not None:
             #check difference between position_values previous & current + difference between CA previous & current
-            playerdata = self.get_player_data(searchValue)
-            previousPositionMainValue = float(playerdata[positionMainValueColumn])
-            previousPositionSecondaryValue = float(playerdata[positionSecondaryValueColumn])
-            previousCAValue = float(playerdata[CAValueColumn])
-            
-            currentPositionMainValue = float(readFileData[1][positionMainValueColumn])
-            currentPositionSecondaryValue = float(readFileData[1][positionSecondaryValueColumn])
-            currentCAValue = float(readFileData[1][CAValueColumn])
+            playerData = self.get_player_data(searchValue)
 
-            readFileData[1][positionProgressColumn] = max(currentPositionMainValue - previousPositionMainValue, currentPositionSecondaryValue - previousPositionSecondaryValue)
-            readFileData[1][CAProgressColumn] = currentCAValue - previousCAValue
+            readFileData[1][positionProgressColumn] = max(self.calculate_difference(playerData, readFileData, positionMainValueColumn), self.calculate_difference(playerData, readFileData, positionSecondaryValueColumn))         
+            readFileData[1][CAProgressColumn] = self.calculate_difference(playerData, readFileData, CAValueColumn)
 
             self.update_row_values(playerRow + 1, readFileData[1])
         else:
             newRow = self.insert_row(readFileData[1][0], readFileData[1][1])
             self.update_row_values(newRow + 1, readFileData[1])        
 
+    def update_player_by_file(self):
+        #TODO check if player exist
+        readTemplateData = self.csvController.read_csv("template.csv")
+        readPlayerData = self.csvController.read_csv("playerInfoOnlyFew.csv")
+        playerRow = self.get_player_row(readPlayerData[1][readPlayerData[0].index("Name")])
+        columnsIndexes = []
+        values = []
+        for word in readPlayerData[0]:
+            if word in readTemplateData[0]:                
+                columnsIndexes.append(readTemplateData[0].index(word))
+                values.append(readPlayerData[1][readPlayerData[0].index(word)])                        
+        columnsIndexes = [index + 1 for index in columnsIndexes]                
+        self.update_columns_values(playerRow + 1, columnsIndexes, values)
+
+    def calculate_difference(self, previousPlayerData, currentPlayerData, columnValue):
+        previousValue = float(previousPlayerData[columnValue])
+        currentValue = float(currentPlayerData[1][columnValue]) 
+        return (currentValue - previousValue)
+
 excelModificationsController = ExcelModificationsController()
 #excelModificationsController.insert_row("BR", "REZERWA")           
-excelModificationsController.insert_player_by_file()
+#excelModificationsController.insert_player_by_file()
+excelModificationsController.update_player_by_file()
