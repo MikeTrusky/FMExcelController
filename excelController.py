@@ -19,10 +19,10 @@ CAProgressColumn = 22
 #TODO use only one: xlwings or openpyxl?
 
 class Helper:
-    def find_row_by_value(self, sheet, column, min_row_value, value):
+    def find_row_by_value(self, sheet, column, min_row_value, value):        
         for index, row in enumerate(sheet.iter_rows(min_row = min_row_value, max_row=sheet.max_row, values_only=True)):
             if row[column-1] == value:
-                return index
+                return index        
         return None            
         
 class OpenpyxlController:
@@ -155,7 +155,7 @@ class ExcelModificationsController:
         currentValue = float(currentPlayerData[1][columnValue]) 
         return (currentValue - previousValue)
 
-excelModificationsController = ExcelModificationsController()
+#excelModificationsController = ExcelModificationsController()
 #excelModificationsController.insert_row("BR", "REZERWA")           
 #excelModificationsController.insert_player_by_file()
-excelModificationsController.update_player_by_file()
+#excelModificationsController.update_player_by_file()
