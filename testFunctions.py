@@ -8,13 +8,15 @@ playerColumn = 3 #const
 allColumnsCount = 27
 
 class TestHelper(unittest.TestCase):
-    def test_row_by_value(self):
-        openpyxlController = OpenpyxlController()        
-        sheet = openpyxlController.create_sheet()        
-        value = "J. Mullings"
-        helper = Helper()
-        result = helper.find_row_by_value(sheet, playerColumn, 0, value)
+    def setUp(self):
+        self.helper = Helper()
+        self.openpyxlController = OpenpyxlController()
+
+    def test_row_by_value(self):           
+        sheet = self.openpyxlController.create_sheet()        
+        value = "J. Mullings"        
+        result = self.helper.find_row_by_value(sheet, playerColumn, 0, value)
         self.assertEqual(result, 3)
-        openpyxlController.close_controller()
+        self.openpyxlController.close_controller()
 
 unittest.main()
