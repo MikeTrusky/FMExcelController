@@ -2,43 +2,54 @@ import openpyxl
 import xlwings as xw
 import csv
 
-positionColumn = 1 #const
-teamColumn = 2 #const
-playerColumn = 3 #const
-fileName = "Barrow.xlsx" #read from config/arguments/something
-allColumnsCount = 27
-
-#TODO column by index, or finding index by column name? 
-
+#region Const Values
+positionColumn = 1
+teamColumn = 2
+playerColumn = 3
 positionMainValueColumn = 10
 positionSecondaryValueColumn = 12
 positionProgressColumn = 14
 CAValueColumn = 21
 CAProgressColumn = 22
+allColumnsCount = 27
+csvTemplateFile = "template.csv"
+#endregion
 
+#TODO column by index, or finding index by column name? 
 #TODO use only one: xlwings or openpyxl?
 
 class Helper:
+    #only for openpyxl
     def find_row_by_value(self, sheet, column, min_row_value, value):        
         for index, row in enumerate(sheet.iter_rows(min_row = min_row_value, max_row=sheet.max_row, values_only=True)):
             if row[column-1] == value:
                 return index        
         return None            
+
+    #only for xlwings
+    def remove_row(self, sheet, row):
+        sheet.range((row - 1, 1)).api.EntireRow.Delete()
         
 class OpenpyxlController:
+    def __init__(self, excelFileName):
+        self.excelFileName = excelFileName
+
     def create_sheet(self):
-        self.wb = openpyxl.load_workbook(fileName)
+        self.wb = openpyxl.load_workbook(self.excelFileName)
         return self.wb.active
 
     def close_controller(self):
         self.wb.close()    
 
 class XlwingsController:
+    def __init__(self, excelFileName):
+        self.excelFileName = excelFileName
+
     def create_sheet(self, useApp):
         self.useApp = useApp
         if useApp:            
             self.app = xw.App(visible=False) #use it for "silent" open & close excel
-        self.wb = xw.Book(fileName)
+        self.wb = xw.Book(self.excelFileName)
         return self.wb.sheets.active
     
     def close_controller(self, closeFile):
@@ -64,7 +75,7 @@ class CsvController:
         return data
     
     def createTemplateFile(self):
-        valuesTemplateFilename = 'template.csv'
+        valuesTemplateFilename = csvTemplateFile
         data = [
             ['Position', 'Team', 'Name', 'Age', 'Country', 'NONE', 'ToolRating_1', 'ToolRating_2', 'NONE', 'PositionMain_Name', 'PositionMain_Value', 'PositionSec_Name', 'PositionSec_Value', 'NONE', 
             'Progress', 'NONE', 'NONE', 'Determination', 'Potential', 'NoPermission', 'NONE', 'CA', 'CAChange', 'PA', 'PlayerStatus', 'RaportStatus', 'Info']    
@@ -72,11 +83,12 @@ class CsvController:
         self.create_csv(valuesTemplateFilename, data)
 
 class ExcelModificationsController:
-    def __init__(self):
+    def __init__(self, excelFileName): 
         self.helper = Helper()
-        self.openpyxlController = OpenpyxlController()
-        self.xlwingsController = XlwingsController()    
+        self.openpyxlController = OpenpyxlController(excelFileName)
+        self.xlwingsController = XlwingsController(excelFileName)    
         self.csvController = CsvController()            
+        self.csvController.createTemplateFile()
 
     def find_teamPart_row(self, positionValue, teamValue):
         sheet = self.openpyxlController.create_sheet()
@@ -120,8 +132,8 @@ class ExcelModificationsController:
         self.xlwingsController.close_controller(True)
         return data
     
-    def insert_player_by_file(self):
-        readFileData = self.csvController.read_csv("playerInfo.csv")
+    def insert_player_by_file(self, csvFileName):
+        readFileData = self.csvController.read_csv(csvFileName)
         searchValue = readFileData[1][2]
         playerRow = self.get_player_row(searchValue)
         if playerRow is not None:
@@ -136,13 +148,14 @@ class ExcelModificationsController:
             newRow = self.insert_row(readFileData[1][0], readFileData[1][1])
             self.update_row_values(newRow + 1, readFileData[1])        
 
-    def update_player_by_file(self):
-        #TODO check if player exist
-        readTemplateData = self.csvController.read_csv("template.csv")
-        readPlayerData = self.csvController.read_csv("playerInfoOnlyFew.csv")
+    def update_player_by_file(self, csvFileName):
+        #TODO check if player exist        
+        readTemplateData = self.csvController.read_csv(csvTemplateFile)
+        readPlayerData = self.csvController.read_csv(csvFileName)
         playerRow = self.get_player_row(readPlayerData[1][readPlayerData[0].index("Name")])
         columnsIndexes = []
         values = []
+        #TODO update progress and CA change
         for word in readPlayerData[0]:
             if word in readTemplateData[0]:                
                 columnsIndexes.append(readTemplateData[0].index(word))
@@ -150,12 +163,19 @@ class ExcelModificationsController:
         columnsIndexes = [index + 1 for index in columnsIndexes]                
         self.update_columns_values(playerRow + 1, columnsIndexes, values)
 
+    def delete_player_by_file(self, csvFileName):
+        readPlayerData = self.csvController.read_csv(csvFileName)
+        print(readPlayerData[1][0])
+        playerRow = self.get_player_row(readPlayerData[1][readPlayerData[0].index("Name")])
+        sheet = self.xlwingsController.create_sheet(True)
+        self.helper.remove_row(sheet, playerRow)
+
     def calculate_difference(self, previousPlayerData, currentPlayerData, columnValue):
         previousValue = float(previousPlayerData[columnValue])
         currentValue = float(currentPlayerData[1][columnValue]) 
         return (currentValue - previousValue)
 
-#excelModificationsController = ExcelModificationsController()
+#excelModificationsController = ExcelModificationsController("Barrow.xlsx")
 #excelModificationsController.insert_row("BR", "REZERWA")           
 #excelModificationsController.insert_player_by_file()
 #excelModificationsController.update_player_by_file()
