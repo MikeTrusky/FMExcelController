@@ -35,10 +35,6 @@ class ViewApp(customtkinter.CTk):
         self.update_excel_button.place(relx=0.5, rely=0.75, anchor=CENTER)
         self.update_excel_button.configure(state="disabled")
 
-        self.insert_player_excel_button = customtkinter.CTkButton(self, text="Insert player with file!", command=self.on_insert_player_excel_button_click)
-        self.insert_player_excel_button.place(relx=0.5, rely=0.85, anchor=CENTER)
-        self.insert_player_excel_button.configure(state="disabled")
-
         self.delete_player_excel_button = customtkinter.CTkButton(self, text="Delete from with file!", command=self.on_delete_player_excel_button_click)
         self.delete_player_excel_button.place(relx=0.5, rely=0.95, anchor=CENTER)
         self.delete_player_excel_button.configure(state="disabled")
@@ -62,10 +58,6 @@ class ViewApp(customtkinter.CTk):
     def on_update_excel_button_click(self):  
         self.excel_modifications_controller = ExcelModificationsController(self.excel_file_name)
         self.excel_modifications_controller.update_player_by_file(self.csv_file_name)
-
-    def on_insert_player_excel_button_click(self):
-        self.excel_modifications_controller = ExcelModificationsController(self.excel_file_name)
-        self.excel_modifications_controller.insert_player_by_file(self.csv_file_name)
 
     def on_delete_player_excel_button_click(self):
         self.excel_modifications_controller = ExcelModificationsController(self.excel_file_name)

@@ -51,7 +51,7 @@ class Helper:
 
     #only for xlwings
     def remove_row(self, sheet, row):
-        sheet.range((row - 1, 1)).api.EntireRow.Delete()
+        sheet.range((row, 1)).api.EntireRow.Delete()
         
 class OpenpyxlController:
     def __init__(self, excelFileName):
@@ -113,7 +113,7 @@ class ExcelModificationsController:
         self.csvController = CsvController()            
         self.csvController.createTemplateFile()
 
-    def find_teamPart_row(self, positionValue, teamValue):
+    def get_teamPart_row(self, positionValue, teamValue):
         sheet = self.openpyxlController.create_sheet()
         positionRow = self.helper.find_row_by_value(sheet, positionColumn, 1, positionValue)
         if positionRow is not None:        
@@ -126,7 +126,7 @@ class ExcelModificationsController:
         
     def insert_row(self, positionValue, teamValue):        
         sheet = self.xlwingsController.create_sheet(True)    
-        teamPartRow = self.find_teamPart_row(positionValue, teamValue)       
+        teamPartRow = self.get_teamPart_row(positionValue, teamValue)       
         sheet.range((teamPartRow + 1, 1)).api.EntireRow.Insert()
         self.xlwingsController.close_controller(True)
         return teamPartRow
@@ -134,12 +134,6 @@ class ExcelModificationsController:
     def update_row_values(self, row_number, values):        
         sheet = self.xlwingsController.create_sheet(True)         
         sheet.range((row_number, 1), (row_number, len(values))).value = values
-        self.xlwingsController.close_controller(True)
-
-    def update_columns_values(self, rowNumber, columnsNumbers, values):
-        sheet = self.xlwingsController.create_sheet(True)                
-        for i in range(len(columnsNumbers)):            
-            sheet.range((rowNumber, columnsNumbers[i]), (rowNumber, columnsNumbers[i])).value = values[i]            
         self.xlwingsController.close_controller(True)
 
     def get_player_row(self, value):        
@@ -187,13 +181,20 @@ class ExcelModificationsController:
                 playerData[valuesColumnsDictionary[valueName]] = readPlayerData[index + 1][readPlayerData[0].index(valueName)]                                 
         return playerData
 
-    def delete_player_by_file(self, csvFileName):
-        readPlayerData = self.csvController.read_csv(csvFileName)
-        print(readPlayerData[1][0])
+    def delete_player_by_file(self, csvFileName): #TODO
+        readPlayerData = self.csvController.read_csv(csvFileName)        
         playerRow = self.get_player_row(readPlayerData[1][readPlayerData[0].index("Name")])
-        sheet = self.xlwingsController.create_sheet(True)
-        self.helper.remove_row(sheet, playerRow)
-
+        playerData = self.get_player_data_by_row(playerRow)
+        if self.get_player_data_by_row(playerRow - 1)[1] != playerData[1] and self.get_player_data_by_row(playerRow + 1)[1] != playerData[1]:            
+            sheet = self.xlwingsController.create_sheet(True)
+            playerRow += 1            
+            sheet.range((playerRow, 3), (playerRow, allColumnsCount)).value = None
+        else:
+            sheet = self.xlwingsController.create_sheet(True)
+            playerRow += 1
+            self.helper.remove_row(sheet, playerRow)
+        self.xlwingsController.close_controller(True)
+    
     def calculate_difference(self, previousValue, currentValue):
         previousValue = float(previousValue)
         currentValue = float(currentValue) 
@@ -201,6 +202,6 @@ class ExcelModificationsController:
 
 excelModificationsController = ExcelModificationsController("Barrow.xlsx")
 #excelModificationsController.insert_row("BR", "REZERWA")           
-#excelModificationsController.insert_player_by_file()
 #excelModificationsController.update_player_by_file("playersFewInfo.csv")
-excelModificationsController.update_player_by_file("newPlayerOnlyFew.csv")
+#excelModificationsController.update_player_by_file("newPlayerOnlyFew.csv")
+excelModificationsController.delete_player_by_file("playerToRemove.csv")
