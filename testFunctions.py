@@ -10,7 +10,7 @@ allColumnsCount = 27
 class TestHelper(unittest.TestCase):
     def setUp(self):
         self.helper = Helper()
-        self.openpyxlController = OpenpyxlController()
+        self.openpyxlController = OpenpyxlController("Barrow.xlsx")
 
     def test_row_by_value(self):           
         sheet = self.openpyxlController.create_sheet()        

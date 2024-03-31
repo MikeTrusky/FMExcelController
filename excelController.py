@@ -13,6 +13,29 @@ CAValueColumn = 21
 CAProgressColumn = 22
 allColumnsCount = 27
 csvTemplateFile = "template.csv"
+valuesColumnsDictionary = {
+    "Position": 0,
+    "Team": 1,
+    "Name": 2,
+    "Age": 3,
+    "Country": 4,
+    "ToolRating_1": 6,
+    "ToolRating_2": 7,
+    "PositionMain_Name": 9,
+    "PositionMain_Value": 10,
+    "PositionSec_Name": 11,
+    "PositionSec_Value": 12,
+    "Progress": 14,
+    "Determination": 17,
+    "Potential": 18,
+    "NoPermission": 19,
+    "CA": 21,   
+    "PA": 23,
+    "PlayerStatus": 24,
+    "RaportStatus": 25,
+    "Info": 26
+}
+templateRow = ['BR', 'REZERWA', 'EmptyName', 0, 'ENG', None, 0, 0, None, 'BR ', 0, 'BR-Lib', 0, None, 'NEW', None, None, None, None, None, None, 0, "NEW", 0, None, None, None]
 #endregion
 
 #TODO column by index, or finding index by column name? 
@@ -121,47 +144,48 @@ class ExcelModificationsController:
 
     def get_player_row(self, value):        
         sheet = self.openpyxlController.create_sheet()                
-        playerRow = self.helper.find_row_by_value(sheet, playerColumn, 1, value)
+        playerRow = self.helper.find_row_by_value(sheet, playerColumn, 0, value)
         self.openpyxlController.close_controller()
         return playerRow
     
-    def get_player_data(self, value):
+    def get_player_data_by_value(self, value):
         sheet = self.xlwingsController.create_sheet(True)
         rowNumber = self.get_player_row(value) + 1              
         data = sheet.range((rowNumber, 1), (rowNumber, allColumnsCount)).value
         self.xlwingsController.close_controller(True)
         return data
+
+    def get_player_data_by_row(self, rowNumber):
+        sheet = self.xlwingsController.create_sheet(True)
+        data = sheet.range((rowNumber + 1, 1), (rowNumber + 1, allColumnsCount)).value
+        self.xlwingsController.close_controller(True)
+        return data
     
-    def insert_player_by_file(self, csvFileName):
-        readFileData = self.csvController.read_csv(csvFileName)
-        searchValue = readFileData[1][2]
-        playerRow = self.get_player_row(searchValue)
-        if playerRow is not None:
-            #check difference between position_values previous & current + difference between CA previous & current
-            playerData = self.get_player_data(searchValue)
-
-            readFileData[1][positionProgressColumn] = max(self.calculate_difference(playerData, readFileData, positionMainValueColumn), self.calculate_difference(playerData, readFileData, positionSecondaryValueColumn))         
-            readFileData[1][CAProgressColumn] = self.calculate_difference(playerData, readFileData, CAValueColumn)
-
-            self.update_row_values(playerRow + 1, readFileData[1])
-        else:
-            newRow = self.insert_row(readFileData[1][0], readFileData[1][1])
-            self.update_row_values(newRow + 1, readFileData[1])        
-
     def update_player_by_file(self, csvFileName):
-        #TODO check if player exist        
-        readTemplateData = self.csvController.read_csv(csvTemplateFile)
-        readPlayerData = self.csvController.read_csv(csvFileName)
-        playerRow = self.get_player_row(readPlayerData[1][readPlayerData[0].index("Name")])
-        columnsIndexes = []
-        values = []
-        #TODO update progress and CA change
-        for word in readPlayerData[0]:
-            if word in readTemplateData[0]:                
-                columnsIndexes.append(readTemplateData[0].index(word))
-                values.append(readPlayerData[1][readPlayerData[0].index(word)])                        
-        columnsIndexes = [index + 1 for index in columnsIndexes]                
-        self.update_columns_values(playerRow + 1, columnsIndexes, values)
+        readPlayerData = self.csvController.read_csv(csvFileName)        
+        nameValueColumn = readPlayerData[0].index("Name")        
+
+        for i in range(len(readPlayerData) - 1):
+            playerRow = self.get_player_row(readPlayerData[i+1][nameValueColumn])            
+            if playerRow is None:
+                newPlayerRow = self.insert_row(readPlayerData[i + 1][readPlayerData[0].index("Position")], readPlayerData[i + 1][readPlayerData[0].index("Team")])
+                playerData = templateRow
+                playerData = self.update_values(readPlayerData, playerData, i)                    
+                self.update_row_values(newPlayerRow + 1, playerData)
+            else:
+                playerData = self.get_player_data_by_row(playerRow) 
+
+                playerData[positionProgressColumn] = max(self.calculate_difference(playerData[positionMainValueColumn], readPlayerData[i + 1][readPlayerData[0].index("PositionMain_Value")]), self.calculate_difference(playerData[positionSecondaryValueColumn], readPlayerData[i + 1][readPlayerData[0].index("PositionSec_Value")]))         
+                playerData[CAProgressColumn] = self.calculate_difference(playerData[CAValueColumn], readPlayerData[i + 1][readPlayerData[0].index("CA")])
+
+                playerData = self.update_values(readPlayerData, playerData, i)                                          
+                self.update_row_values(playerRow + 1, playerData)
+
+    def update_values(self, readPlayerData, playerData, index):
+        for valueName in readPlayerData[0]:
+            if valueName in valuesColumnsDictionary:                
+                playerData[valuesColumnsDictionary[valueName]] = readPlayerData[index + 1][readPlayerData[0].index(valueName)]                                 
+        return playerData
 
     def delete_player_by_file(self, csvFileName):
         readPlayerData = self.csvController.read_csv(csvFileName)
@@ -170,12 +194,13 @@ class ExcelModificationsController:
         sheet = self.xlwingsController.create_sheet(True)
         self.helper.remove_row(sheet, playerRow)
 
-    def calculate_difference(self, previousPlayerData, currentPlayerData, columnValue):
-        previousValue = float(previousPlayerData[columnValue])
-        currentValue = float(currentPlayerData[1][columnValue]) 
+    def calculate_difference(self, previousValue, currentValue):
+        previousValue = float(previousValue)
+        currentValue = float(currentValue) 
         return (currentValue - previousValue)
 
-#excelModificationsController = ExcelModificationsController("Barrow.xlsx")
+excelModificationsController = ExcelModificationsController("Barrow.xlsx")
 #excelModificationsController.insert_row("BR", "REZERWA")           
 #excelModificationsController.insert_player_by_file()
-#excelModificationsController.update_player_by_file()
+#excelModificationsController.update_player_by_file("playersFewInfo.csv")
+excelModificationsController.update_player_by_file("newPlayerOnlyFew.csv")
