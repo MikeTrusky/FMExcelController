@@ -67,8 +67,20 @@ class OpenpyxlController:
 class XlwingsController:
     def __init__(self, excelFileName):
         self.excelFileName = excelFileName
+        self.isOpened = False
+
+    def is_file_open(self):
+        try:                        
+            if xw.books[self.excelFileName] is not None:                
+                return True
+            return False        
+        except Exception as ex:
+            return False
 
     def create_sheet(self, useApp):
+        self.isOpened = self.is_file_open()
+        if self.isOpened:
+            useApp = False
         self.useApp = useApp
         if useApp:            
             self.app = xw.App(visible=False) #use it for "silent" open & close excel
@@ -76,8 +88,8 @@ class XlwingsController:
         return self.wb.sheets.active
     
     def close_controller(self, closeFile):
-        self.wb.save()
-        if(closeFile):
+        self.wb.save()        
+        if(closeFile and not self.isOpened):
             self.wb.close()
         if(self.useApp):
             self.app.quit()
