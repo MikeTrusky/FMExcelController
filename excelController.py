@@ -38,9 +38,6 @@ valuesColumnsDictionary = {
 templateRow = ['BR', 'REZERWA', 'EmptyName', 0, 'ENG', None, 0, 0, None, 'BR ', 0, 'BR-Lib', 0, None, 'NEW', None, None, None, None, None, None, 0, "NEW", 0, None, None, None]
 #endregion
 
-#TODO column by index, or finding index by column name? 
-#TODO use only one: xlwings or openpyxl?
-
 class Helper:
     #only for openpyxl
     def find_row_by_value(self, sheet, column, min_row_value, value):        
@@ -194,8 +191,10 @@ class ExcelModificationsController:
         return playerData
 
     def delete_player_by_file(self, csvFileName): #TODO
-        readPlayerData = self.csvController.read_csv(csvFileName)        
+        readPlayerData = self.csvController.read_csv(csvFileName)                
         playerRow = self.get_player_row(readPlayerData[1][readPlayerData[0].index("Name")])
+        if playerRow is None:
+            return
         playerData = self.get_player_data_by_row(playerRow)
         if self.get_player_data_by_row(playerRow - 1)[1] != playerData[1] and self.get_player_data_by_row(playerRow + 1)[1] != playerData[1]:            
             sheet = self.xlwingsController.create_sheet(True)

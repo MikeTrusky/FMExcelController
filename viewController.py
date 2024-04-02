@@ -12,31 +12,31 @@ class ViewApp(customtkinter.CTk):
         customtkinter.set_default_color_theme("blue")
 
         self.title("FM Excel Controller App")
-        self.geometry("300x400")
+        self.geometry("300x300")
 
         self.choose_excel_file_button = customtkinter.CTkButton(self, text="Choose excel file", command=self.on_choose_excel_file_button_click)
         self.choose_excel_file_button.place(relx=0.5, rely=0.2, anchor=CENTER)
 
         self.excel_file_label = customtkinter.CTkLabel(self, text="Excel file name: ")
-        self.excel_file_label.place(relx=0.1, rely=0.3) 
+        self.excel_file_label.place(relx=0.2, rely=0.25) 
         self.excel_file_name_label = customtkinter.CTkLabel(self, text="none")
-        self.excel_file_name_label.place(relx=0.4, rely=0.3)
+        self.excel_file_name_label.place(relx=0.5, rely=0.25)
 
         self.choose_csv_file_button = customtkinter.CTkButton(self, text="Choose csv file", command=self.on_choose_csv_file_button_click)
         self.choose_csv_file_button.place(relx=0.5, rely=0.5, anchor=CENTER)
         self.choose_csv_file_button.configure(state="disabled")
 
         self.csv_file_label = customtkinter.CTkLabel(self, text="CSV file name: ")
-        self.csv_file_label.place(relx=0.1, rely = 0.6) 
+        self.csv_file_label.place(relx=0.2, rely = 0.55) 
         self.csv_file_name_label = customtkinter.CTkLabel(self, text="none")
-        self.csv_file_name_label.place(relx=0.4, rely=0.6)
+        self.csv_file_name_label.place(relx=0.5, rely=0.55)
         
-        self.update_excel_button = customtkinter.CTkButton(self, text="Update player with file!", command=self.on_update_excel_button_click)
-        self.update_excel_button.place(relx=0.5, rely=0.75, anchor=CENTER)
+        self.update_excel_button = customtkinter.CTkButton(self, text="Update", width=100, command=self.on_update_excel_button_click)
+        self.update_excel_button.place(relx=0.3, rely=0.8, anchor=CENTER)
         self.update_excel_button.configure(state="disabled")
 
-        self.delete_player_excel_button = customtkinter.CTkButton(self, text="Delete from with file!", command=self.on_delete_player_excel_button_click)
-        self.delete_player_excel_button.place(relx=0.5, rely=0.95, anchor=CENTER)
+        self.delete_player_excel_button = customtkinter.CTkButton(self, text="Delete", width=100, command=self.on_delete_player_excel_button_click)
+        self.delete_player_excel_button.place(relx=0.7, rely=0.8, anchor=CENTER)
         self.delete_player_excel_button.configure(state="disabled")
 
     def on_choose_excel_file_button_click(self):
