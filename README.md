@@ -5,7 +5,7 @@
 
 ## Table of Contents
 * [About The Project](#about-the-project)
-* [Technologies Used](#technologies-used)
+* [Built with](#built-with)
 * [Features](#features)
 * [Screenshots](#screenshots)
 * [Usage](#usage)
@@ -21,12 +21,13 @@ txt files with data. It can update data, add new rows in excel or delete them.
 
 You can prepare detailed data for your team faster.
 
-### Built With
+## Built with
 
 * Python
 * Tkinter
 * CustomTkinter
 * PyInstaller - to build python project to exe file
+
 ## Features
 
 * Update excel file using txt files
