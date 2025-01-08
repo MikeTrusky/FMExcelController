@@ -52,7 +52,6 @@ class ViewApp(customtkinter.CTk):
             self.csv_file_name = os.path.basename(file_path)
         self.csv_file_name_label.configure(text=self.csv_file_name)        
         self.update_excel_button.configure(state="normal")        
-        self.insert_player_excel_button.configure(state="normal")
         self.delete_player_excel_button.configure(state="normal")
 
     def on_update_excel_button_click(self):  

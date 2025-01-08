@@ -93,14 +93,14 @@ class XlwingsController:
 
 class CsvController:
     def create_csv(self, filename, data):
-        with open(filename, 'w', newline='') as csvfile:
+        with open(filename, 'w', newline='', encoding= 'unicode_escape') as csvfile:
             writer = csv.writer(csvfile)
             for row in data:
                 writer.writerow(row)
 
     def read_csv(self, filename):
         data = []
-        with open(filename, 'r', newline='') as csvfile:
+        with open(filename, 'r', newline='', encoding= 'unicode_escape') as csvfile:
             reader = csv.reader(csvfile)
             for row in reader:
                 data.append(row)
@@ -124,9 +124,9 @@ class ExcelModificationsController:
 
     def get_teamPart_row(self, positionValue, teamValue):
         sheet = self.openpyxlController.create_sheet()
-        positionRow = self.helper.find_row_by_value(sheet, positionColumn, 1, positionValue)
+        positionRow = self.helper.find_row_by_value(sheet, positionColumn, 1, positionValue)        
         if positionRow is not None:        
-            team_part_row = self.helper.find_row_by_value(sheet, teamColumn, positionRow, teamValue)
+            team_part_row = self.helper.find_row_by_value(sheet, teamColumn, positionRow, teamValue)            
             self.openpyxlController.close_controller()
             if team_part_row is not None:
                 return team_part_row + positionRow
@@ -135,7 +135,7 @@ class ExcelModificationsController:
         
     def insert_row(self, positionValue, teamValue):        
         sheet = self.xlwingsController.create_sheet(True)    
-        teamPartRow = self.get_teamPart_row(positionValue, teamValue)       
+        teamPartRow = self.get_teamPart_row(positionValue, teamValue)               
         sheet.range((teamPartRow + 1, 1)).api.EntireRow.Insert()
         self.xlwingsController.close_controller(True)
         return teamPartRow
@@ -168,8 +168,10 @@ class ExcelModificationsController:
         readPlayerData = self.csvController.read_csv(csvFileName)        
         nameValueColumn = readPlayerData[0].index("Name")        
 
+        print(readPlayerData)
+
         for i in range(len(readPlayerData) - 1):
-            playerRow = self.get_player_row(readPlayerData[i+1][nameValueColumn])            
+            playerRow = self.get_player_row(readPlayerData[i+1][nameValueColumn])                      
             if playerRow is None:
                 newPlayerRow = self.insert_row(readPlayerData[i + 1][readPlayerData[0].index("Position")], readPlayerData[i + 1][readPlayerData[0].index("Team")])
                 playerData = templateRow
@@ -190,7 +192,7 @@ class ExcelModificationsController:
                 playerData[valuesColumnsDictionary[valueName]] = readPlayerData[index + 1][readPlayerData[0].index(valueName)]                                 
         return playerData
 
-    def delete_player_by_file(self, csvFileName): #TODO
+    def delete_player_by_file(self, csvFileName):
         readPlayerData = self.csvController.read_csv(csvFileName)                
         playerRow = self.get_player_row(readPlayerData[1][readPlayerData[0].index("Name")])
         if playerRow is None:
@@ -210,9 +212,3 @@ class ExcelModificationsController:
         previousValue = float(previousValue)
         currentValue = float(currentValue) 
         return (currentValue - previousValue)
-
-excelModificationsController = ExcelModificationsController("Barrow.xlsx")
-#excelModificationsController.insert_row("BR", "REZERWA")           
-#excelModificationsController.update_player_by_file("playersFewInfo.csv")
-#excelModificationsController.update_player_by_file("newPlayerOnlyFew.csv")
-excelModificationsController.delete_player_by_file("playerToRemove.csv")
